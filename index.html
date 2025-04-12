@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rocket Crash</title>
+  <style>
+    :root {
+      --primary: #6e45e2;
+      --secondary: #41D07D;
+      --accent: #ff7e5f;
+      --dark: #1a1a2e;
+      --light: #f8f9fa;
+      --balance-color: #41D07D;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: 'Orbitron', sans-serif;
+      background: #000;
+      height: 100vh;
+      color: var(--light);
+      user-select: none;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+    #game-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #sky {
+      position: absolute;
+      width: 100%;
+      height: 200%;
+      background: 
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 800 800"><g fill="white"><circle cx="400" cy="400" r="1" opacity="0.8"/><circle cx="100" cy="300" r="1.5" opacity="0.6"/><circle cx="200" cy="750" r="1" opacity="0.9"/><circle cx="700" cy="450" r="1.2" opacity="0.7"/><circle cx="500" cy="100" r="1" opacity="0.5"/><circle cx="650" cy="650" r="1.3" opacity="0.8"/><circle cx="300" cy="600" r="1" opacity="0.4"/><circle cx="150" cy="200" r="1.5" opacity="0.7"/><circle cx="750" cy="300" r="1" opacity="0.9"/></g></svg>'),
+        linear-gradient(to bottom, #000428, #004e92);
+      animation: moveSky 20s linear infinite;
+    }
+
+    #moon {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 60px;
+      height: 60px;
+      background: transparent;
+      border-radius: 50%;
+      box-shadow: 15px 0 0 0 #f8f9fa;
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8));
+      z-index: 1;
+    }
+
+    @keyframes moveSky {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-50%); }
+    }
+
+    #rocket-container {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      transition: bottom 0.1s linear;
+    }
+
+    #rocket {
+      width: 60px;
+      height: 100px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 100"><defs><linearGradient id="rocketGrad" x1="50%" y1="0%" x2="50%" y2="100%"><stop offset="0%" stop-color="%23ff7e5f"/><stop offset="100%" stop-color="%23d62c1a"/></linearGradient><linearGradient id="windowGrad" x1="50%" y1="0%" x2="50%" y2="100%"><stop offset="0%" stop-color="%2388d3ce"/><stop offset="100%" stop-color="%236e45e2"/></linearGradient></defs><path d="M30 0 L60 30 L45 30 L52 100 L8 100 L15 30 L0 30 Z" fill="url(%23rocketGrad)"/><rect x="22" y="25" width="16" height="50" fill="%2341D07D" opacity="0.8"/><circle cx="30" cy="15" r="12" fill="url(%23windowGrad)"/><rect x="26" y="40" width="8" height="25" fill="%23ffffff" opacity="0.9"/></svg>');
+      position: relative;
+      filter: drop-shadow(0 0 15px rgba(255, 126, 95, 0.8));
+    }
+
+    #flame {
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30px;
+      height: 60px;
+      background: radial-gradient(ellipse at center, #ff9a44 0%, #ff2400 70%, transparent 100%);
+      border-radius: 50% 50% 20% 20%;
+      filter: blur(8px);
+      animation: flicker 0.2s infinite alternate;
+    }
+
+    @keyframes flicker {
+      0%, 100% { 
+        transform: translateX(-50%) scaleY(1) scaleX(1); 
+        opacity: 1;
+        height: 60px;
+      }
+      50% { 
+        transform: translateX(-50%) scaleY(1.4) scaleX(0.7); 
+        opacity: 0.7;
+        height: 80px;
+      }
+    }
+
+    .game-panel {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: rgba(26, 26, 46, 0.9);
+      padding: 15px;
+      box-sizing: border-box;
+      border-top: 3px solid var(--primary);
+      z-index: 100;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    input, button {
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      background: var(--accent);
+    }
+
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    #betAmount {
+      width: 100px;
+      text-align: center;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid var(--primary);
+    }
+
+    .game-stats {
+      display: flex;
+      justify-content: space-around;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+
+    .stat-box {
+      text-align: center;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+      min-width: 100px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    #balance {
+      color: var(--balance-color);
+    }
+
+    #multiplier {
+      color: var(--secondary);
+    }
+
+    #cashValue {
+      color: var(--secondary);
+      font-size: 22px;
+    }
+
+    #resultMsg {
+      min-height: 20px;
+      margin: 10px 0;
+      font-weight: bold;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .explosion {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: 
+        radial-gradient(circle at center, #ff9a44 0%, #ff2400 50%, transparent 70%),
+        radial-gradient(circle at 30% 30%, #ffffff 0%, transparent 25%),
+        radial-gradient(circle at 70% 70%, #ffffff 0%, transparent 25%);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      animation: explode 0.8s forwards;
+      pointer-events: none;
+      z-index: 5;
+      filter: blur(2px);
+    }
+
+    @keyframes explode {
+      0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+      50% { opacity: 0.9; }
+      100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+    }
+
+    .cashout-btn {
+      background: var(--secondary) !important;
+      width: 120px;
+      font-size: 16px;
+      padding: 10px 0;
+    }
+
+    .cancel-btn {
+      background: #ff7e5f !important;
+      width: 120px;
+      font-size: 16px;
+      padding: 10px 0;
+    }
+
+    .cancel-btn:hover {
+      background: #d62c1a !important;
+    }
+
+    .cashout-btn:hover {
+      background: #2E7D56 !important;
+    }
+
+    .cashout-value {
+      font-size: 24px;
+      color: var(--secondary);
+      text-align: center;
+      margin: 8px 0;
+    }
+
+    #countdown {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 36px;
+      color: var(--accent);
+      background: rgba(0,0,0,0.7);
+      padding: 15px 25px;
+      border-radius: 50%;
+      z-index: 20;
+      animation: pulse 0.5s infinite alternate;
+      border: 3px solid var(--accent);
+      width: 70px;
+      height: 70px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 10px var(--accent); }
+      100% { transform: translate(-50%, -50%) scale(1.1); box-shadow: 0 0 20px var(--accent); }
+    }
+
+    #current-multiplier {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: -30px;
+      font-size: 18px;
+      color: var(--secondary);
+      background: rgba(0,0,0,0.7);
+      padding: 2px 8px;
+      border-radius: 5px;
+      z-index: 15;
+      white-space: nowrap;
+    }
+
+    .rocket-trail {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--secondary);
+      border-radius: 50%;
+      filter: blur(1px);
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="sky"></div>
+    <div id="moon"></div>
+    <div id="countdown">7</div>
+    <div id="rocket-container">
+      <div id="current-multiplier">1.00x</div>
+      <div id="rocket"></div>
+      <div id="flame"></div>
+    </div>
+  </div>
+
+  <div class="game-panel">
+    <h1 style="text-align: center; margin: 0 0 10px 0; color: var(--secondary); font-size: 20px;">🚀 ROCKET CRASH</h1>
+    
+    <div class="game-stats">
+      <div class="stat-box">
+        <div>Balance</div>
+        <div class="stat-value">$<span id="balance">9999.00</span></div>
+      </div>
+      <div class="stat-box">
+        <div>Bet</div>
+        <div class="stat-value">$<span id="betValue">10.00</span></div>
+      </div>
+    </div>
+    
+    <div class="controls">
+      <input type="number" id="betAmount" placeholder="Bet" min="1" max="9999" value="10">
+      <button id="placeBetBtn">PLACE BET</button>
+      <button id="cancelBetBtn" class="cancel-btn" disabled>CANCEL BET</button>
+      <button id="cashOutBtn" class="cashout-btn" disabled>CASH OUT</button>
+    </div>
+    
+    <div class="cashout-value">
+      $<span id="cashValue">0.00</span>
+    </div>
+    
+    <div id="resultMsg"></div>
+  </div>
+
+  <!-- Sound Effects -->
+  <audio id="launchSound" src="https://assets.mixkit.co/sfx/preview/mixkit-space-rocket-1513.mp3"></audio>
+  <audio id="flySound" src="https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-spaceship-ambience-414.mp3" loop></audio>
+  <audio id="cashoutSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
+  <audio id="crashSound" src="https://assets.mixkit.co/sfx/preview/mixkit-explosion-1615.mp3"></audio>
+  <audio id="countdownSound" src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3"></audio>
+
+  <script>
+    // Game elements
+    const balanceEl = document.getElementById('balance');
+    const betValueEl = document.getElementById('betValue');
+    const multiplierEl = document.getElementById('current-multiplier');
+    const cashValueEl = document.getElementById('cashValue');
+    const resultMsg = document.getElementById('resultMsg');
+    const cashOutBtn = document.getElementById('cashOutBtn');
+    const placeBetBtn = document.getElementById('placeBetBtn');
+    const cancelBetBtn = document.getElementById('cancelBetBtn');
+    const betAmountInput = document.getElementById('betAmount');
+    const rocketContainer = document.getElementById('rocket-container');
+    const rocket = document.getElementById('rocket');
+    const gameContainer = document.getElementById('game-container');
+    const countdownEl = document.getElementById('countdown');
+
+    // Sound effects
+    const launchSound = document.getElementById('launchSound');
+    const flySound = document.getElementById('flySound');
+    const cashoutSound = document.getElementById('cashoutSound');
+    const crashSound = document.getElementById('crashSound');
+    const countdownSound = document.getElementById('countdownSound');
+
+    // Game variables
+    let balance = 9999.00; // Increased balance to 9999
+    let currentMultiplier = 1.00;
+    let currentBet = 0;
+    let activeBet = 0;
+    let gameInterval;
+    let rocketInterval;
+    let trailInterval;
+    let gameActive = false;
+    let countdownInterval;
+    let countdownValue = 7;
+    let crashMultiplier = 1.00;
+    let hasCashedOut = false;
+    let trailParticles = [];
+    let sessionStartTime = 0;
+    let playerProfit = 0;
+    let houseProfit = 0;
+
+    // Initialize game
+    function initGame() {
+      balanceEl.textContent = balance.toFixed(2);
+      betAmountInput.max = balance.toFixed(2);
+      sessionStartTime = Date.now();
+      
+      // Update bet value when input changes
+      betAmountInput.addEventListener('input', () => {
+        const bet = parseFloat(betAmountInput.value) || 0;
+        betValueEl.textContent = bet.toFixed(2);
+      });
+      
+      // Place bet button click handler
+      placeBetBtn.addEventListener('click', placeBet);
+      
+      // Cancel bet button click handler
+      cancelBetBtn.addEventListener('click', cancelBet);
+      
+      // Enable sounds on first interaction
+      document.addEventListener('click', function initSounds() {
+        launchSound.volume = 0.7;
+        flySound.volume = 0.4;
+        cashoutSound.volume = 0.7;
+        crashSound.volume = 0.8;
+        countdownSound.volume = 0.5;
+        
+        // Play silent sound to unlock audio
+        const silentSound = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...");
+        silentSound.volume = 0;
+        silentSound.play().then(() => {
+          silentSound.remove();
+        });
+        
+        document.removeEventListener('click', initSounds);
+      }, { once: true });
+
+      // Start automatic rounds
+      startCountdown();
+    }
+
+    // Place a bet
+    function placeBet() {
+      const bet = parseFloat(betAmountInput.value);
+      if (isNaN(bet) || bet <= 0 || bet > balance) {
+        resultMsg.textContent = "Invalid bet amount";
+        resultMsg.style.color = "#ff7e5f";
+        return;
+      }
+      
+      activeBet = bet;
+      cancelBetBtn.disabled = false;
+      resultMsg.textContent = `Bet placed: $${bet.toFixed(2)}`;
+      resultMsg.style.color = "#41D07D";
+    }
+
+    // Cancel a bet
+    function cancelBet() {
+      activeBet = 0;
+      cancelBetBtn.disabled = true;
+      resultMsg.textContent = "Bet canceled";
+      resultMsg.style.color = "#ff7e5f";
+    }
+
+    // Countdown timer before each round
+    function startCountdown() {
+      countdownValue = 7;
+      countdownEl.textContent = countdownValue;
+      countdownEl.style.display = 'flex';
+      hasCashedOut = false;
+      currentMultiplier = 1.00;
+      multiplierEl.textContent = currentMultiplier.toFixed(2) + 'x';
+      
+      countdownInterval = setInterval(() => {
+        countdownValue--;
+        countdownEl.textContent = countdownValue;
+        countdownSound.currentTime = 0;
+        countdownSound.play();
+        
+        // Add extra animation on last 3 seconds
+        if (countdownValue <= 3) {
+          countdownEl.style.animation = 'pulse 0.3s infinite alternate';
+          countdownEl.style.color = '#ff7e5f';
+        }
+        
+        if (countdownValue <= 0) {
+          clearInterval(countdownInterval);
+          countdownEl.style.display = 'none';
+          countdownEl.style.animation = '';
+          countdownEl.style.color = '';
+          startGame();
+        }
+      }, 1000);
+    }
+
+    // Start the game round
+    function startGame() {
+      // Check if player has placed a bet
+      if (activeBet > 0) {
+        currentBet = activeBet;
+        balance -= currentBet;
+        balanceEl.textContent = balance.toFixed(2);
+        cashOutBtn.disabled = false;
+        cancelBetBtn.disabled = true;
+      } else {
+        currentBet = 0;
+        cashOutBtn.disabled = true;
+      }
+      
+      currentMultiplier = 1.00;
+      multiplierEl.textContent = currentMultiplier.toFixed(2) + 'x';
+      cashValueEl.textContent = (currentBet * currentMultiplier).toFixed(2);
+      resultMsg.textContent = "";
+      resultMsg.style.color = "";
+      gameActive = true;
+
+      // Calculate crash multiplier with house advantage
+      crashMultiplier = calculateCrashMultiplier();
+      
+      // Reset rocket position (middle of screen)
+      rocketContainer.style.bottom = "50%";
+      rocket.style.display = "block";
+      rocket.style.transform = "rotate(0deg)";
+      
+      // Clear any existing trail particles
+      trailParticles.forEach(p => p.remove());
+      trailParticles = [];
+      
+      // Play launch sound
+      launchSound.currentTime = 0;
+      launchSound.play();
+      setTimeout(() => {
+        flySound.currentTime = 0;
+        flySound.play();
+      }, 500);
+
+      // Animate rocket upward
+      let rocketPosition = 50;
+      rocketInterval = setInterval(() => {
+        // Calculate speed based on current multiplier
+        const speed = 0.2 + (currentMultiplier * 0.02);
+        rocketPosition += speed;
+        
+        // Cap position to keep rocket visible
+        if (rocketPosition > 85) rocketPosition = 85;
+        
+        rocketContainer.style.bottom = rocketPosition + "%";
+        
+        // Add realistic movement effects
+        if (currentMultiplier > 3) {
+          const rotation = (Math.random() - 0.5) * (currentMultiplier / 2);
+          rocket.style.transform = `rotate(${rotation}deg)`;
+        }
+      }, 50);
+
+      // Create rocket trail particles
+      trailInterval = setInterval(() => {
+        if (currentMultiplier > 1) {
+          const trail = document.createElement('div');
+          trail.className = 'rocket-trail';
+          trail.style.left = rocketContainer.offsetLeft + 30 + 'px';
+          trail.style.top = rocketContainer.offsetTop + 100 + 'px';
+          gameContainer.appendChild(trail);
+          trailParticles.push(trail);
+          
+          // Fade out and remove trail particles
+          setTimeout(() => {
+            trail.style.opacity = '0';
+            setTimeout(() => {
+              trail.remove();
+              trailParticles = trailParticles.filter(p => p !== trail);
+            }, 1000);
+          }, 100);
+        }
+      }, 50);
+
+      // Game logic
+      gameInterval = setInterval(() => {
+        // Increase multiplier with acceleration
+        const increment = 0.01 * (1 + (currentMultiplier * 0.02));
+        currentMultiplier += increment;
+        multiplierEl.textContent = currentMultiplier.toFixed(2) + 'x';
+        
+        // Update cash value if not cashed out
+        if (!hasCashedOut && currentBet > 0) {
+          cashValueEl.textContent = (currentBet * currentMultiplier).toFixed(2);
+        }
+        
+        // Check if reached crash point
+        if (currentMultiplier >= crashMultiplier) {
+          endGame();
+        }
+      }, 100);
+    }
+
+    // Calculate crash multiplier with house advantage
+    function calculateCrashMultiplier() {
+      const sessionDuration = (Date.now() - sessionStartTime) / 60000; // in minutes
+      let baseMultiplier;
+      
+      // Adjust base multiplier based on session duration
+      if (sessionDuration < 5) {
+        // First 5 minutes - higher multipliers to attract players
+        baseMultiplier = 1 + Math.random() * 9; // 1x-10x
+      } else if (sessionDuration < 15) {
+        // 5-15 minutes - moderate multipliers
+        baseMultiplier = 1 + Math.random() * 4; // 1x-5x
+      } else {
+        // After 15 minutes - lower multipliers to ensure house profit
+        baseMultiplier = 1 + Math.random() * 2; // 1x-3x
+      }
+      
+      // Additional adjustments based on player profit
+      if (playerProfit > houseProfit * 1.5) {
+        // If player is winning too much, reduce multipliers further
+        baseMultiplier = Math.max(1, baseMultiplier * 0.7);
+      }
+      
+      return parseFloat(baseMultiplier.toFixed(2));
+    }
+
+    // Cash out
+    cashOutBtn.addEventListener('click', () => {
+      if (!gameActive || hasCashedOut || currentBet === 0) return;
+      
+      hasCashedOut = true;
+      const winnings = currentBet * currentMultiplier;
+      balance += winnings;
+      balanceEl.textContent = balance.toFixed(2);
+      playerProfit += (winnings - currentBet);
+      
+      resultMsg.textContent = `💰 You cashed out at ${currentMultiplier.toFixed(2)}x and won $${winnings.toFixed(2)}!`;
+      resultMsg.style.color = "#41D07D";
+      
+      // Play cashout sound
+      cashoutSound.currentTime = 0;
+      cashoutSound.play();
+      
+      // Disable cashout button
+      cashOutBtn.disabled = true;
+    });
+
+    // End game (only called when rocket crashes)
+    function endGame() {
+      clearInterval(gameInterval);
+      clearInterval(rocketInterval);
+      clearInterval(trailInterval);
+      gameActive = false;
+      cashOutBtn.disabled = true;
+      
+      // Calculate house profit
+      if (currentBet > 0) {
+        if (hasCashedOut) {
+          houseProfit += (currentBet * 0.05); // 5% house edge on wins
+        } else {
+          houseProfit += currentBet; // Player loses entire bet
+        }
+      }
+      
+      // Hide rocket when crashed
+      rocket.style.display = "none";
+      
+      // Create explosion effect
+      const explosion = document.createElement('div');
+      explosion.className = 'explosion';
+      explosion.style.left = rocketContainer.offsetLeft + 30 + "px";
+      explosion.style.top = rocketContainer.offsetTop + 60 + "px";
+      gameContainer.appendChild(explosion);
+      
+      // Play crash sound
+      flySound.pause();
+      crashSound.currentTime = 0;
+      crashSound.play();
+      
+      if (currentBet > 0) {
+        resultMsg.textContent = `💥 Crashed at ${currentMultiplier.toFixed(2)}x! You ${hasCashedOut ? 'won' : 'lost'} $${hasCashedOut ? (currentBet * currentMultiplier).toFixed(2) : currentBet.toFixed(2)}`;
+        resultMsg.style.color = hasCashedOut ? "#41D07D" : "#ff7e5f";
+      } else {
+        resultMsg.textContent = `💥 Crashed at ${currentMultiplier.toFixed(2)}x! Place your bet for next round`;
+        resultMsg.style.color = "#6e45e2";
+      }
+      
+      balanceEl.textContent = balance.toFixed(2);
+      betAmountInput.max = balance.toFixed(2);
+      
+      // Reset for next round
+      activeBet = 0;
+      currentBet = 0;
+      hasCashedOut = false;
+      cancelBetBtn.disabled = true;
+      
+      // Start countdown for next round
+      setTimeout(startCountdown, 3000);
+    }
+
+    // Initialize the game
+    initGame();
+  </script>
+</body>
+</html>
